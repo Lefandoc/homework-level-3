@@ -1,2 +1,1 @@
-# homework-level-3
-GeekBrains homework Java 3
+Домашнее задание к уроку 1 Generics
