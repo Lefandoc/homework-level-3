@@ -1,8 +1,6 @@
 package ru.gb.onlinechat.client;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.util.*;
 
@@ -15,11 +13,13 @@ public class ChatClient {
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
+    private ChatLogger logger;
 
     private final Controller controller;
 
     public ChatClient(Controller controller) {
         this.controller = controller;
+        logger = new ChatLogger();
     }
 
     public void openConnection() {
@@ -54,6 +54,9 @@ public class ChatClient {
                             controller.addMessage("Успешная авторизация под ником " + nick);
                             controller.setAuth(true);
                             timer.cancel();
+                            logger.setLogFile(nick);
+                            controller.getLogs(logger.readLogs());
+                            logger.writeLogs(msgAuth);
                             break;
                         }
                     }
@@ -63,6 +66,7 @@ public class ChatClient {
                         if (message.startsWith(COMMAND_PREFIX.getCommand())) {
                             if (END_COMMAND.getCommand().equals(message)) {
                                 controller.setAuth(false);
+                                logger.writeLogs(message);
                                 break;
                             }
                             if (message.startsWith(GET_CLIENTS_COMMAND.getCommand())) {
@@ -72,10 +76,12 @@ public class ChatClient {
                                     controller.updateClientList(clients);
                                     controller.addMessage(message.replace(GET_CLIENTS_COMMAND.getCommand(), "Online now:"));
                                 }
+                                logger.writeLogs(message);
                                 continue;
                             }
                         }
                         controller.addMessage(message);
+                        logger.writeLogs(message);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -120,5 +126,9 @@ public class ChatClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public ChatLogger getLogger() {
+        return logger;
     }
 }
