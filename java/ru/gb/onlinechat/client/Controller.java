@@ -30,6 +30,7 @@ public class Controller {
     private ListView<String> clientList;
 
     private final ChatClient client;
+    private ChatLogger logger;
 
     public Controller() {
         client = new ChatClient(this);
@@ -74,7 +75,7 @@ public class Controller {
         clientList.getItems().addAll(clients);
     }
 
-    public void btnExitClick(ActionEvent event) {
-        System.exit(0);
+    public void getLogs(String logs) {
+        textArea.appendText(logs + "\n");
     }
 }
