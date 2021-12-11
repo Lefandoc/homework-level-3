@@ -61,14 +61,7 @@ public class AuthJDBC {
                      connection.prepareStatement("SELECT * FROM users WHERE id = ?")) {
             preparedStatement.setInt(1, id);
             final ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                System.out.printf("%d - %s - %s - %s\n",
-                        resultSet.getInt(1), // id
-                        resultSet.getString(2), // login
-                        resultSet.getString(3), // pass
-                        resultSet.getString(4)); // nick
 
-            }
             return resultSet;
         }
     }

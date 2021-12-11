@@ -4,6 +4,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static ru.gb.onlinechat.Commands.*;
 
@@ -25,14 +27,25 @@ public class ClientHandler {
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
 
-            new Thread(() -> {
+            ExecutorService executor = Executors.newFixedThreadPool(new SimpleAuthService().getUSERS_COUNT());
+            executor.execute(() -> {
                 try {
                     authenticate();
                     readMessages();
                 } finally {
                     closeConnection();
                 }
-            }).start();
+            });
+            executor.shutdown();
+
+//            new Thread(() -> {
+//                try {
+//                    authenticate();
+//                    readMessages();
+//                } finally {
+//                    closeConnection();
+//                }
+//            }).start();
 
         } catch (IOException e) {
             throw new RuntimeException(e);

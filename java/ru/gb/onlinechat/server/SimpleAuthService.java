@@ -10,6 +10,8 @@ public class SimpleAuthService implements AuthService {
     private final AuthJDBC authJDBC;
     private final int USERS_COUNT = 5; // +1 для корректной отработки циклов for
 
+
+
     public SimpleAuthService() {
         authJDBC = new AuthJDBC();
         users = new ArrayList<>();
@@ -58,5 +60,9 @@ public class SimpleAuthService implements AuthService {
         public String toString() {
             return "User" + login + password + nick;
         }
+    }
+
+    public int getUSERS_COUNT() {
+        return USERS_COUNT;
     }
 }
