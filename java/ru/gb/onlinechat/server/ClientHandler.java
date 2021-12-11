@@ -1,5 +1,8 @@
 package ru.gb.onlinechat.server;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -18,8 +21,12 @@ public class ClientHandler {
     private final DataInputStream in;
     private final DataOutputStream out;
     private String nick;
+    //    private final Logger logger;
+    private static final Logger logger = LogManager.getLogger(ClientHandler.class.getSimpleName());
 
-    public ClientHandler(Socket socket, ChatServer server) {
+
+    public ClientHandler(Socket socket, ChatServer server, ExecutorService threadPool) {
+//        logger = ChatServer.getLogger();
         try {
             this.nick = "";
             this.socket = socket;
@@ -27,8 +34,7 @@ public class ClientHandler {
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
 
-            ExecutorService executor = Executors.newFixedThreadPool(new SimpleAuthService().getUSERS_COUNT());
-            executor.execute(() -> {
+            threadPool.submit(() -> {
                 try {
                     authenticate();
                     readMessages();
@@ -36,18 +42,9 @@ public class ClientHandler {
                     closeConnection();
                 }
             });
-            executor.shutdown();
-
-//            new Thread(() -> {
-//                try {
-//                    authenticate();
-//                    readMessages();
-//                } finally {
-//                    closeConnection();
-//                }
-//            }).start();
 
         } catch (IOException e) {
+            logger.error(e);
             throw new RuntimeException(e);
         }
 
@@ -59,14 +56,16 @@ public class ClientHandler {
                 in.close();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
+//            e.printStackTrace();
         }
         try {
             if (out != null) {
                 out.close();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
+//            e.printStackTrace();
         }
         try {
             if (socket != null) {
@@ -74,8 +73,10 @@ public class ClientHandler {
                 socket.close();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
+//            e.printStackTrace();
         }
+        logger.info("Connection closed");
     }
 
     private void authenticate() {
@@ -93,6 +94,7 @@ public class ClientHandler {
                     if (nick != null) {
                         if (server.isNickBusy(nick)) {
                             sendMessage("Пользователь уже авторизован");
+                            logger.info("Authorization failed for " + nick + " - WRONG NICK");
                             continue;
                         }
                         sendMessage(SUCCESS_AUTH_COMMAND.getCommand() + " " + nick);
@@ -107,7 +109,8 @@ public class ClientHandler {
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error(e);
+//                e.printStackTrace();
             }
 
         }
@@ -115,10 +118,12 @@ public class ClientHandler {
 
     public void sendMessage(String message) {
         try {
-            System.out.println("SERVER: Send message to " + nick);
+            //System.out.println("SERVER: Send message to " + nick);
+            logger.info("Send message to " + nick);
             out.writeUTF(message);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
+//            e.printStackTrace();
         }
     }
 
@@ -126,9 +131,11 @@ public class ClientHandler {
         try {
             while (true) {
                 final String msg = in.readUTF();
-                System.out.println("Receive message from " + nick + ": " + msg);
+//                System.out.println("Receive message from " + nick + ": " + msg);
+                logger.info("Receive message from " + nick + ": " + msg);
                 if (msg.startsWith(COMMAND_PREFIX.getCommand())) {
                     if (END_COMMAND.getCommand().equals(msg)) {
+                        logger.info("Receive END command from: " + nick);
                         break;
                     }
                     if (msg.startsWith(PRIVATE_MESSAGE_COMMAND.getCommand())) {
@@ -141,7 +148,8 @@ public class ClientHandler {
                 server.broadcast(nick + ": " + msg);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
+//            e.printStackTrace();
         }
     }
 
